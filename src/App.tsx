@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ShoppingCart, X, Plus, Minus, Menu, ChevronDown,
@@ -8,6 +8,32 @@ import {
 import { products, Product } from './data';
 
 interface CartItem extends Product { quantity: number; }
+
+/* ─────────────────────────────────────────────────────────────
+   JS PARALLAX — works on iOS, Android, everything
+   Adjusts backgroundPositionY of a bg div as user scrolls.
+───────────────────────────────────────────────────────────── */
+function useParallax(speed = 0.28) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const section = el.parentElement as HTMLElement;
+    if (!section) return;
+    const update = () => {
+      const rect = section.getBoundingClientRect();
+      const sectionCenter = rect.top + rect.height / 2;
+      const viewportCenter = window.innerHeight / 2;
+      const relPos = (sectionCenter - viewportCenter) / window.innerHeight;
+      const yPct = 50 + relPos * speed * 100;
+      el.style.backgroundPositionY = `${Math.max(5, Math.min(95, yPct))}%`;
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    update();
+    return () => window.removeEventListener('scroll', update);
+  }, [speed]);
+  return ref;
+}
 
 /* ─────────────────────────────────────────────────────────────
    SCROLL PROGRESS BAR
@@ -195,6 +221,10 @@ export default function App() {
   const [shopFilter, setShopFilter] = useState<'All'|'Mugs'|'T-Shirts'|'Accessories'>('All');
   const [openFaq,    setOpenFaq]    = useState<number|null>(null);
 
+  // JS parallax refs — work on every device including iOS
+  const aboutBgRef = useParallax(0.28);
+  const shopBgRef  = useParallax(0.28);
+
   useEffect(() => {
     const fn = () => { setScrolled(window.scrollY > 55); setShowTop(window.scrollY > 400); };
     window.addEventListener('scroll', fn, { passive: true });
@@ -341,23 +371,23 @@ export default function App() {
       ══════════════════════════════════════ */}
       <section id="hero" className="relative min-h-screen flex items-end justify-center overflow-hidden bg-pm-void">
         <div className="absolute inset-0">
-          <video autoPlay muted loop playsInline className="w-full h-full object-cover object-center">
+          <video autoPlay muted loop playsInline poster="/hero-bg.png" className="w-full h-full object-cover object-center">
             <source src="/hero-bg.mp4" type="video/mp4" />
           </video>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(13,11,30,0.97) 0%, rgba(13,11,30,0.3) 30%, transparent 60%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(13,11,30,0.55) 0%, transparent 20%)' }} />
         </div>
 
-        {/* Floating pixel badges */}
-        <motion.div className="absolute top-28 left-6 md:left-16 z-10 float"
+        {/* Floating pixel badges — repositioned so they never clip on mobile */}
+        <motion.div className="absolute top-24 left-4 sm:left-16 z-10 float"
           initial={{ x: -60, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 1, duration: 0.8 }}>
-          <div className="font-display text-[8px] bg-pm-pink text-white px-4 py-2" style={{ boxShadow: '3px 3px 0 #8b1042' }}>🔥 NEW DROP</div>
+          <div className="font-display text-[7px] sm:text-[8px] bg-pm-pink text-white px-3 sm:px-4 py-2" style={{ boxShadow: '3px 3px 0 #8b1042' }}>🔥 NEW DROP</div>
         </motion.div>
-        <motion.div className="absolute top-36 right-6 md:right-16 z-10 float-delayed"
+        <motion.div className="absolute top-24 right-4 sm:right-16 z-10 float-delayed"
           initial={{ x: 60, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 1.2, duration: 0.8 }}>
-          <div className="font-display text-[8px] bg-pm-gold text-black px-4 py-2" style={{ boxShadow: '3px 3px 0 #a07800' }}>⭐ CREATOR</div>
+          <div className="font-display text-[7px] sm:text-[8px] bg-pm-gold text-black px-3 sm:px-4 py-2" style={{ boxShadow: '3px 3px 0 #a07800' }}>⭐ CREATOR</div>
         </motion.div>
-        <motion.div className="absolute top-52 left-8 md:left-24 z-10 hidden md:block"
+        <motion.div className="absolute top-40 left-4 sm:left-24 z-10 hidden sm:block"
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.5 }}>
           <div className="font-display text-[7px] border border-pm-cyan/40 text-pm-cyan px-3 py-1.5" style={{ background: 'rgba(0,229,204,0.08)' }}>💎 LIMITED</div>
         </motion.div>
@@ -375,22 +405,22 @@ export default function App() {
         {/* CTA */}
         <motion.div initial={{ y: 40, opacity: 0 }} animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.5, duration: 0.9, ease: [0.16,1,0.3,1] }}
-          className="relative z-10 flex flex-col items-center gap-6 pb-20 px-4 w-full">
+          className="relative z-10 flex flex-col items-center gap-5 pb-16 sm:pb-20 px-5 w-full max-w-lg mx-auto">
           <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
-            className="font-display text-[9px] text-pm-gold tracking-widest opacity-80">
+            className="font-display text-[7px] sm:text-[9px] text-pm-gold tracking-widest opacity-80 text-center">
             ◆ WELCOME TO THE CHROMATIC KINGDOM ◆
           </motion.p>
           <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.7 }}
-            className="flex flex-col sm:flex-row gap-5 justify-center w-full max-w-md">
-            <GoldBtn onClick={() => goto('gallery')} size="lg" className="w-full sm:w-auto text-center">⭐ EXPLORE WORLD</GoldBtn>
-            <GoldBtn onClick={() => goto('shop')} size="lg" outline className="w-full sm:w-auto text-center">🛒 SHOP MERCH</GoldBtn>
+            className="flex flex-col sm:flex-row gap-4 w-full">
+            <GoldBtn onClick={() => goto('gallery')} size="lg" className="w-full text-center">⭐ EXPLORE WORLD</GoldBtn>
+            <GoldBtn onClick={() => goto('shop')} size="lg" outline className="w-full text-center">🛒 SHOP MERCH</GoldBtn>
           </motion.div>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }}
-            className="flex gap-6 font-display text-[8px] text-pm-muted">
-            <span className="flex items-center gap-1.5"><span style={{ color: '#FFD700' }}>★★★★★</span> 5.0 Rating</span>
-            <span className="text-pm-surface">|</span>
+            className="flex flex-wrap justify-center gap-3 sm:gap-6 font-display text-[7px] sm:text-[8px] text-pm-muted">
+            <span className="flex items-center gap-1"><span style={{ color: '#FFD700' }}>★★★★★</span> 5.0</span>
+            <span className="hidden sm:inline text-pm-surface">|</span>
             <span>5K+ Community</span>
-            <span className="text-pm-surface">|</span>
+            <span className="hidden sm:inline text-pm-surface">|</span>
             <span>100+ Artworks</span>
           </motion.div>
         </motion.div>
@@ -409,9 +439,11 @@ export default function App() {
       {/* ══════════════════════════════════════
           ABOUT / INSPIRE
       ══════════════════════════════════════ */}
-      <section id="about" className="relative py-28 md:py-36 overflow-hidden about-parallax-bg">
-        {/* Subtle overlay — keeps text readable while showing the space art */}
-        <div className="absolute inset-0" style={{ background: 'rgba(13,11,30,0.58)' }} />
+      <section id="about" className="relative py-20 md:py-36 overflow-hidden">
+        {/* JS parallax bg — works on iOS, Android, all devices */}
+        <div ref={aboutBgRef} className="absolute inset-0"
+          style={{ backgroundImage: 'url(/about-bg.png)', backgroundSize: 'cover', backgroundPositionX: '50%', backgroundPositionY: '50%', willChange: 'background-position-y' }} />
+        <div className="absolute inset-0" style={{ background: 'rgba(13,11,30,0.60)' }} />
 
         <div className="relative max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
           {/* Image badge */}
@@ -536,8 +568,10 @@ export default function App() {
       {/* ══════════════════════════════════════
           SHOP — parallax fixed background
       ══════════════════════════════════════ */}
-      <section id="shop" className="relative py-28 md:py-36 overflow-hidden shop-parallax-bg">
-        {/* Subtle overlay — keep image visible but text readable */}
+      <section id="shop" className="relative py-20 md:py-36 overflow-hidden">
+        {/* JS parallax bg — works on iOS, Android, all devices */}
+        <div ref={shopBgRef} className="absolute inset-0"
+          style={{ backgroundImage: 'url(/shop-bg.png)', backgroundSize: 'cover', backgroundPositionX: '50%', backgroundPositionY: '50%', willChange: 'background-position-y' }} />
         <div className="absolute inset-0" style={{ background: 'rgba(13,11,30,0.58)' }} />
 
         <div className="relative z-10 max-w-7xl mx-auto px-6">
